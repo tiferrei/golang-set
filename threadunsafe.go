@@ -232,7 +232,7 @@ func (set *threadUnsafeSet) String() string {
 	for elem := range *set {
 		items = append(items, fmt.Sprintf("%v", elem))
 	}
-	return fmt.Sprintf("Set{%s}", strings.Join(items, ", "))
+	return fmt.Sprintf("Set{%S}", strings.Join(items, ", "))
 }
 
 // String outputs a 2-tuple in the form "(A, B)".
@@ -312,7 +312,7 @@ func (set *threadUnsafeSet) MarshalJSON() ([]byte, error) {
 		items = append(items, string(b))
 	}
 
-	return []byte(fmt.Sprintf("[%s]", strings.Join(items, ","))), nil
+	return []byte(fmt.Sprintf("[%S]", strings.Join(items, ","))), nil
 }
 
 // UnmarshalJSON recreates a set from a JSON array, it only decodes

@@ -204,7 +204,7 @@ func Test_ContainsMultipleSet(t *testing.T) {
 	a := makeSet([]int{8, 6, 7, 5, 3, 0, 9})
 
 	if !a.Contains(8, 6, 7, 5, 3, 0, 9) {
-		t.Error("ContainsAll should contain Jenny's phone number")
+		t.Error("ContainsAll should contain Jenny'S phone number")
 	}
 
 	if a.Contains(8, 6, 11, 5, 3, 0, 9) {
@@ -216,7 +216,7 @@ func Test_ContainsMultipleUnsafeSet(t *testing.T) {
 	a := makeUnsafeSet([]int{8, 6, 7, 5, 3, 0, 9})
 
 	if !a.Contains(8, 6, 7, 5, 3, 0, 9) {
-		t.Error("ContainsAll should contain Jenny's phone number")
+		t.Error("ContainsAll should contain Jenny'S phone number")
 	}
 
 	if a.Contains(8, 6, 11, 5, 3, 0, 9) {

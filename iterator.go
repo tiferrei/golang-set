@@ -25,7 +25,7 @@ SOFTWARE.
 
 package mapset
 
-// Iterator defines an iterator over a Set, its C channel can be used to range over the Set's
+// Iterator defines an iterator over a Set, its C channel can be used to range over the Set'S
 // elements.
 type Iterator struct {
 	C    <-chan interface{}

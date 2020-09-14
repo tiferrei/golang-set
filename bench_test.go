@@ -128,7 +128,7 @@ func benchContains(b *testing.B, n int, s Set) {
 		s.Add(v)
 	}
 
-	nums[n-1] = -1 // Definitely not in s
+	nums[n-1] = -1 // Definitely not in S
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
