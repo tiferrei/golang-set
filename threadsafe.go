@@ -29,7 +29,7 @@ import "sync"
 
 type threadSafeSet struct {
 	s threadUnsafeSet
-	sync.RWMutex
+	l sync.RWMutex
 }
 
 func newThreadSafeSet() threadSafeSet {
@@ -37,38 +37,38 @@ func newThreadSafeSet() threadSafeSet {
 }
 
 func (set *threadSafeSet) Add(i interface{}) bool {
-	set.Lock()
+	set.l.Lock()
 	ret := set.s.Add(i)
-	set.Unlock()
+	set.l.Unlock()
 	return ret
 }
 
 func (set *threadSafeSet) Contains(i ...interface{}) bool {
-	set.RLock()
+	set.l.RLock()
 	ret := set.s.Contains(i...)
-	set.RUnlock()
+	set.l.RUnlock()
 	return ret
 }
 
 func (set *threadSafeSet) IsSubset(other Set) bool {
 	o := other.(*threadSafeSet)
 
-	set.RLock()
-	o.RLock()
+	set.l.RLock()
+	o.l.RLock()
 
 	ret := set.s.IsSubset(&o.s)
-	set.RUnlock()
-	o.RUnlock()
+	set.l.RUnlock()
+	o.l.RUnlock()
 	return ret
 }
 
 func (set *threadSafeSet) IsProperSubset(other Set) bool {
 	o := other.(*threadSafeSet)
 
-	set.RLock()
-	defer set.RUnlock()
-	o.RLock()
-	defer o.RUnlock()
+	set.l.RLock()
+	defer set.l.RUnlock()
+	o.l.RLock()
+	defer o.l.RUnlock()
 
 	return set.s.IsProperSubset(&o.s)
 }
@@ -84,93 +84,93 @@ func (set *threadSafeSet) IsProperSuperset(other Set) bool {
 func (set *threadSafeSet) Union(other Set) Set {
 	o := other.(*threadSafeSet)
 
-	set.RLock()
-	o.RLock()
+	set.l.RLock()
+	o.l.RLock()
 
 	unsafeUnion := set.s.Union(&o.s).(*threadUnsafeSet)
 	ret := &threadSafeSet{s: *unsafeUnion}
-	set.RUnlock()
-	o.RUnlock()
+	set.l.RUnlock()
+	o.l.RUnlock()
 	return ret
 }
 
 func (set *threadSafeSet) Intersect(other Set) Set {
 	o := other.(*threadSafeSet)
 
-	set.RLock()
-	o.RLock()
+	set.l.RLock()
+	o.l.RLock()
 
 	unsafeIntersection := set.s.Intersect(&o.s).(*threadUnsafeSet)
 	ret := &threadSafeSet{s: *unsafeIntersection}
-	set.RUnlock()
-	o.RUnlock()
+	set.l.RUnlock()
+	o.l.RUnlock()
 	return ret
 }
 
 func (set *threadSafeSet) Difference(other Set) Set {
 	o := other.(*threadSafeSet)
 
-	set.RLock()
-	o.RLock()
+	set.l.RLock()
+	o.l.RLock()
 
 	unsafeDifference := set.s.Difference(&o.s).(*threadUnsafeSet)
 	ret := &threadSafeSet{s: *unsafeDifference}
-	set.RUnlock()
-	o.RUnlock()
+	set.l.RUnlock()
+	o.l.RUnlock()
 	return ret
 }
 
 func (set *threadSafeSet) SymmetricDifference(other Set) Set {
 	o := other.(*threadSafeSet)
 
-	set.RLock()
-	o.RLock()
+	set.l.RLock()
+	o.l.RLock()
 
 	unsafeDifference := set.s.SymmetricDifference(&o.s).(*threadUnsafeSet)
 	ret := &threadSafeSet{s: *unsafeDifference}
-	set.RUnlock()
-	o.RUnlock()
+	set.l.RUnlock()
+	o.l.RUnlock()
 	return ret
 }
 
 func (set *threadSafeSet) Clear() {
-	set.Lock()
+	set.l.Lock()
 	set.s = newThreadUnsafeSet()
-	set.Unlock()
+	set.l.Unlock()
 }
 
 func (set *threadSafeSet) Remove(i interface{}) {
-	set.Lock()
+	set.l.Lock()
 	delete(set.s, i)
-	set.Unlock()
+	set.l.Unlock()
 }
 
 func (set *threadSafeSet) Cardinality() int {
-	set.RLock()
-	defer set.RUnlock()
+	set.l.RLock()
+	defer set.l.RUnlock()
 	return len(set.s)
 }
 
 func (set *threadSafeSet) Each(cb func(interface{}) bool) {
-	set.RLock()
+	set.l.RLock()
 	for elem := range set.s {
 		if cb(elem) {
 			break
 		}
 	}
-	set.RUnlock()
+	set.l.RUnlock()
 }
 
 func (set *threadSafeSet) Iter() <-chan interface{} {
 	ch := make(chan interface{})
 	go func() {
-		set.RLock()
+		set.l.RLock()
 
 		for elem := range set.s {
 			ch <- elem
 		}
 		close(ch)
-		set.RUnlock()
+		set.l.RUnlock()
 	}()
 
 	return ch
@@ -180,7 +180,7 @@ func (set *threadSafeSet) Iterator() *Iterator {
 	iterator, ch, stopCh := newIterator()
 
 	go func() {
-		set.RLock()
+		set.l.RLock()
 	L:
 		for elem := range set.s {
 			select {
@@ -190,7 +190,7 @@ func (set *threadSafeSet) Iterator() *Iterator {
 			}
 		}
 		close(ch)
-		set.RUnlock()
+		set.l.RUnlock()
 	}()
 
 	return iterator
@@ -199,35 +199,35 @@ func (set *threadSafeSet) Iterator() *Iterator {
 func (set *threadSafeSet) Equal(other Set) bool {
 	o := other.(*threadSafeSet)
 
-	set.RLock()
-	o.RLock()
+	set.l.RLock()
+	o.l.RLock()
 
 	ret := set.s.Equal(&o.s)
-	set.RUnlock()
-	o.RUnlock()
+	set.l.RUnlock()
+	o.l.RUnlock()
 	return ret
 }
 
 func (set *threadSafeSet) Clone() Set {
-	set.RLock()
+	set.l.RLock()
 
 	unsafeClone := set.s.Clone().(*threadUnsafeSet)
 	ret := &threadSafeSet{s: *unsafeClone}
-	set.RUnlock()
+	set.l.RUnlock()
 	return ret
 }
 
 func (set *threadSafeSet) String() string {
-	set.RLock()
+	set.l.RLock()
 	ret := set.s.String()
-	set.RUnlock()
+	set.l.RUnlock()
 	return ret
 }
 
 func (set *threadSafeSet) PowerSet() Set {
-	set.RLock()
+	set.l.RLock()
 	unsafePowerSet := set.s.PowerSet().(*threadUnsafeSet)
-	set.RUnlock()
+	set.l.RUnlock()
 
 	ret := &threadSafeSet{s: newThreadUnsafeSet()}
 	for subset := range unsafePowerSet.Iter() {
@@ -238,46 +238,46 @@ func (set *threadSafeSet) PowerSet() Set {
 }
 
 func (set *threadSafeSet) Pop() interface{} {
-	set.Lock()
-	defer set.Unlock()
+	set.l.Lock()
+	defer set.l.Unlock()
 	return set.s.Pop()
 }
 
 func (set *threadSafeSet) CartesianProduct(other Set) Set {
 	o := other.(*threadSafeSet)
 
-	set.RLock()
-	o.RLock()
+	set.l.RLock()
+	o.l.RLock()
 
 	unsafeCartProduct := set.s.CartesianProduct(&o.s).(*threadUnsafeSet)
 	ret := &threadSafeSet{s: *unsafeCartProduct}
-	set.RUnlock()
-	o.RUnlock()
+	set.l.RUnlock()
+	o.l.RUnlock()
 	return ret
 }
 
 func (set *threadSafeSet) ToSlice() []interface{} {
 	keys := make([]interface{}, 0, set.Cardinality())
-	set.RLock()
+	set.l.RLock()
 	for elem := range set.s {
 		keys = append(keys, elem)
 	}
-	set.RUnlock()
+	set.l.RUnlock()
 	return keys
 }
 
 func (set *threadSafeSet) MarshalJSON() ([]byte, error) {
-	set.RLock()
+	set.l.RLock()
 	b, err := set.s.MarshalJSON()
-	set.RUnlock()
+	set.l.RUnlock()
 
 	return b, err
 }
 
 func (set *threadSafeSet) UnmarshalJSON(p []byte) error {
-	set.RLock()
+	set.l.RLock()
 	err := set.s.UnmarshalJSON(p)
-	set.RUnlock()
+	set.l.RUnlock()
 
 	return err
 }
