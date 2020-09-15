@@ -173,6 +173,12 @@ type Set interface {
 
 	// Returns the members of the set as a slice.
 	ToSlice() []interface{}
+
+	// Returns the set as a byte slice containing a JSON array.
+	MarshalJSON() ([]byte, error)
+
+	// Reads the set as a byte slice containing a JSON array.
+	UnmarshalJSON([]byte) error
 }
 
 // NewSet creates and returns a reference to an empty set.  Operations
